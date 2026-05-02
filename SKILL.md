@@ -118,10 +118,30 @@ If a user reports their terminal isn't being detected, the fix is to add a branc
 All in `~/.claude/skills/mastermind/`. Submission and waiting are deliberately split so the orchestrator can drive N agents in parallel without blocking.
 
 - **`spawn.sh <role>`** — opens new tmux+claude session in an auto-detected GUI terminal window, dismisses trust prompt, runs `/rename mastermind-N` + `/color <random>`. Prints session name on stdout. Reads/updates `state.json[next_n]`. May print `MASTERMIND_DEP_MISSING` (hard fail) or `MASTERMIND_NOTICE` (soft fail, no GUI window) on stderr — see "Environment & dependencies" for what to do with each.
-- **`send.sh <session> <prompt>`** — types the prompt and submits Enter. **Returns immediately — does NOT wait for the response.** Snapshots the pre-send `⏺` baseline to `/tmp/<session>.last_resp` so watch.sh can detect "what changed". Use this to fire prompts at multiple agents in quick succession.
-- **`watch.sh <session>`** — designed to be the command of a Monitor tool invocation. Polls the session pane; when a NEW response settles (last `⏺` line changed OR `⏺` count changed, AND footer spinner anchor absent), writes the latest response block to `/tmp/<session>.response` and emits one event line `RESPONSE_READY <session> <bytes>`, then exits.
+- **`send.sh <session> <prompt>`** — types the prompt and submits Enter. **Returns immediately — does NOT wait for the response.** Snapshots the pre-send `●` baseline to `/tmp/<session>.last_resp` so watch.sh can detect "what changed". Use this to fire prompts at multiple agents in quick succession.
+- **`watch.sh <session>`** — designed to be the command of a Monitor tool invocation. Polls the session pane; when a NEW response settles (last `●` line changed OR `●` count changed, AND footer spinner anchor absent), writes the latest response block to `/tmp/<session>.response` and emits one event line `RESPONSE_READY <session> <bytes>`, then exits.
 - **`peek.sh <session>`** — non-blocking snapshot of an agent's current state. Cheap to call. Returns `STATUS: working|idle|permission-prompt|not-found` followed by the latest (possibly partial) response block. Use any time you want to check on an agent without interrupting it or consuming a Monitor slot — e.g., a watch.sh has been pending for many minutes and you want to verify the agent is actually progressing vs. hung.
 - **`close.sh <session>`** — `tmux kill-session`. The attached GUI window exits when its child shell dies.
+
+### Required pattern for parallel spawning (do NOT stagger with sleeps)
+
+Spawning K agents one-at-a-time with `sleep 2 && spawn.sh`, `sleep 4 && spawn.sh`, etc. is **wrong**. Each `spawn.sh` takes ~5–15s while it waits for the claude TUI to render and accepts `/rename` + `/color`; sequencing K of them serializes the whole orchestration.
+
+**Correct pattern** when spawning K agents in parallel:
+
+1. **Pre-allocate** the K agent numbers in one jq write to `state.json` before issuing any spawn calls. Read `next_n`, write `next_n + K` back. This avoids the read/modify/write race that would otherwise happen when K concurrent spawn.sh processes each try to bump `next_n`.
+
+2. **Fire all K spawns in a single tool-call batch** — one message containing K Bash invocations, not K separate messages. Pass each pre-allocated number with `--n N`:
+
+   ```
+   spawn.sh --n 2 builder
+   spawn.sh --n 3 builder
+   spawn.sh --n 4 builder
+   ```
+
+3. **Do NOT insert `sleep` commands** between spawns. `spawn.sh` already blocks until the TUI is ready and `/rename`/`/color` settle. Sleeping adds latency without affecting correctness.
+
+The harness's parallel-tool-call ability is the load-bearing mechanism: K Bash calls in one message run concurrently; K Bash calls across K messages run sequentially. Always use the former for spawning.
 
 ### Required pattern for talking to a sub-agent
 
@@ -172,7 +192,7 @@ Sending a prompt to a sub-claude TUI has TWO known quirks:
 1. **`tmux send-keys "$MSG" Enter` does NOT submit reliably** for long pastes (probably bracketed-paste handling consuming the Enter). Always send the message and the Enter as **separate `send-keys` calls** with a ~0.3s sleep between. `send.sh` does this.
 2. **Detecting "response complete" via grep heuristics is fragile**. Three approaches that DON'T work robustly:
    - Watching for "thinking" spinner to flip `saw_thinking=1` then disappear → race condition if response is fast.
-   - Counting `⏺ ` response markers expecting monotonic increase → breaks when old markers scroll off alt-screen.
+   - Counting `● ` response markers expecting monotonic increase → breaks when old markers scroll off alt-screen.
    - Looking for "Baked for Xs" / "Crunched for Xs" / "Worked for Xs" → the verb varies and changes between Claude versions.
 
 The working approach (v3): claude's TUI shows `· esc to interrupt` in the footer ONLY while responding. Idle footer is just `auto mode on (shift+tab to cycle)`. Combined with a pane-hash-diff against the pre-Enter snapshot, this fires exactly once per response.
