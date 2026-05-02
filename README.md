@@ -28,8 +28,8 @@ mastermind shells out to a few standard tools. If any are missing, `spawn.sh` ex
 - **`claude`** — the Claude Code CLI itself, on `$PATH`
 - **`jq`** — for `state.json` reads/writes
 - **A GUI terminal emulator** — soft requirement. If none of the supported terminals is detected, mastermind still works — it just leaves the tmux session detached and prints attach instructions. Supported emulators per platform:
-  - **macOS**: Alacritty, Ghostty, kitty, WezTerm, iTerm, Terminal.app
-  - **Linux**: alacritty, ghostty, kitty, wezterm, gnome-terminal, konsole, xfce4-terminal, terminator, tilix, xterm — or anything you set in `$TERMINAL`
+  - **macOS**: kitty, Alacritty, Ghostty, WezTerm, iTerm, Terminal.app — or `$TERMINAL` (when set to `kitty` or `alacritty`)
+  - **Linux**: `$TERMINAL` env var → kitty, alacritty, ghostty, wezterm, gnome-terminal, konsole, xfce4-terminal, terminator, tilix, xterm
   - **WSL / Windows**: Windows Terminal (`wt.exe`)
 
 Install the missing tool with your platform's package manager (`brew`, `apt`, `dnf`, `pacman`, `nix`, etc.) and re-invoke. On NixOS, add the dep (`tmux`, `jq`) to `environment.systemPackages` and rebuild.

@@ -103,15 +103,22 @@ is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
 case "$(uname -s)" in
   Darwin)
     # macOS: prefer modern GPU terminals, fall back to Terminal.app via osascript.
-    if [ -d "/Applications/Alacritty.app" ] || command -v alacritty >/dev/null 2>&1; then
+    # Honor user-set $TERMINAL first when it points at a known emulator.
+    if [ "${TERMINAL:-}" = "kitty" ] && { [ -d "/Applications/kitty.app" ] || command -v kitty >/dev/null 2>&1; }; then
+      open -g -n -a kitty --args --title "$TITLE" tmux attach-session -t "$SESSION" \
+        && LAUNCHED="kitty"
+    elif [ "${TERMINAL:-}" = "alacritty" ] && { [ -d "/Applications/Alacritty.app" ] || command -v alacritty >/dev/null 2>&1; }; then
+      open -g -n -a Alacritty --args --title "$TITLE" -e tmux attach-session -t "$SESSION" \
+        && LAUNCHED="Alacritty"
+    elif [ -d "/Applications/kitty.app" ] || command -v kitty >/dev/null 2>&1; then
+      open -g -n -a kitty --args --title "$TITLE" tmux attach-session -t "$SESSION" \
+        && LAUNCHED="kitty"
+    elif [ -d "/Applications/Alacritty.app" ] || command -v alacritty >/dev/null 2>&1; then
       open -g -n -a Alacritty --args --title "$TITLE" -e tmux attach-session -t "$SESSION" \
         && LAUNCHED="Alacritty"
     elif [ -d "/Applications/Ghostty.app" ] || command -v ghostty >/dev/null 2>&1; then
       open -g -n -a Ghostty --args -e "tmux attach-session -t $SESSION" \
         && LAUNCHED="Ghostty"
-    elif [ -d "/Applications/kitty.app" ] || command -v kitty >/dev/null 2>&1; then
-      open -g -n -a kitty --args --title "$TITLE" tmux attach-session -t "$SESSION" \
-        && LAUNCHED="kitty"
     elif [ -d "/Applications/WezTerm.app" ] || command -v wezterm >/dev/null 2>&1; then
       open -g -n -a WezTerm --args start -- tmux attach-session -t "$SESSION" \
         && LAUNCHED="WezTerm"
@@ -142,7 +149,7 @@ EOF
       "$TERMINAL" -e tmux attach-session -t "$SESSION" >/dev/null 2>&1 &
       LAUNCHED="$TERMINAL"
     else
-      for T in alacritty ghostty kitty wezterm gnome-terminal konsole xfce4-terminal terminator tilix xterm; do
+      for T in kitty alacritty ghostty wezterm gnome-terminal konsole xfce4-terminal terminator tilix xterm; do
         command -v "$T" >/dev/null 2>&1 || continue
         case "$T" in
           alacritty)      alacritty --title "$TITLE" -e tmux attach-session -t "$SESSION" >/dev/null 2>&1 & ;;

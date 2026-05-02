@@ -84,8 +84,8 @@ Then re-invoke mastermind.
 
 `spawn.sh` auto-detects a terminal to open the tmux session in. Detection order:
 
-- **macOS**: Alacritty → Ghostty → kitty → WezTerm → iTerm → Terminal.app
-- **Linux**: `$TERMINAL` env var → alacritty → ghostty → kitty → wezterm → gnome-terminal → konsole → xfce4-terminal → terminator → tilix → xterm
+- **macOS**: `$TERMINAL` (when `kitty`/`alacritty`) → kitty → Alacritty → Ghostty → WezTerm → iTerm → Terminal.app
+- **Linux**: `$TERMINAL` env var → kitty → alacritty → ghostty → wezterm → gnome-terminal → konsole → xfce4-terminal → terminator → tilix → xterm
 - **WSL / Windows**: Windows Terminal (`wt.exe`)
 
 If none of those is found, `spawn.sh` still succeeds (the tmux session is running, and you can drive it normally), but it writes a block to stderr starting with the literal token `MASTERMIND_NOTICE:` containing manual-attach instructions:
