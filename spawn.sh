@@ -72,13 +72,14 @@ else
   # Allocate from state.json AND bump immediately, so this slot is reserved
   # before the slow tmux/claude/window startup. Sequential callers see
   # incrementing N; parallel callers should pre-allocate via --n.
-  if [ -f "$STATE" ]; then
-    N=$(jq -r '.next_n // 1' "$STATE")
-    TMP=$(mktemp)
-    jq --argjson n "$((N + 1))" '.next_n = $n' "$STATE" > "$TMP" && mv "$TMP" "$STATE"
-  else
-    N=1
+  # If state.json is missing (orchestrator hasn't initialized it yet), seed
+  # it here — otherwise consecutive spawns would all collide on N=1.
+  if [ ! -f "$STATE" ]; then
+    echo '{"next_n":1}' > "$STATE"
   fi
+  N=$(jq -r '.next_n // 1' "$STATE")
+  TMP=$(mktemp)
+  jq --argjson n "$((N + 1))" '.next_n = $n' "$STATE" > "$TMP" && mv "$TMP" "$STATE"
 fi
 
 SESSION="mastermind-$N"
