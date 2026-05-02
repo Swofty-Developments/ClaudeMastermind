@@ -32,7 +32,7 @@ mastermind shells out to a few standard tools. If any are missing, `spawn.sh` ex
   - **Linux**: alacritty, ghostty, kitty, wezterm, gnome-terminal, konsole, xfce4-terminal, terminator, tilix, xterm — or anything you set in `$TERMINAL`
   - **WSL / Windows**: Windows Terminal (`wt.exe`)
 
-Install the missing tool with your platform's package manager (`brew`, `apt`, `dnf`, `pacman`, etc.) and re-invoke.
+Install the missing tool with your platform's package manager (`brew`, `apt`, `dnf`, `pacman`, `nix`, etc.) and re-invoke. On NixOS, add the dep (`tmux`, `jq`) to `environment.systemPackages` and rebuild.
 
 ## Usage
 

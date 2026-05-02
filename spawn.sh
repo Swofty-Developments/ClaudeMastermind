@@ -41,7 +41,8 @@ command -v tmux >/dev/null 2>&1 || die_missing tmux \
   "macOS:         brew install tmux" \
   "Debian/Ubuntu: sudo apt install tmux" \
   "Fedora/RHEL:   sudo dnf install tmux" \
-  "Arch:          sudo pacman -S tmux"
+  "Arch:          sudo pacman -S tmux" \
+  "NixOS:         add 'tmux' to environment.systemPackages, then nixos-rebuild switch"
 
 command -v claude >/dev/null 2>&1 || die_missing claude \
   "Install Claude Code: https://claude.com/claude-code" \
@@ -51,7 +52,8 @@ command -v jq >/dev/null 2>&1 || die_missing jq \
   "macOS:         brew install jq" \
   "Debian/Ubuntu: sudo apt install jq" \
   "Fedora/RHEL:   sudo dnf install jq" \
-  "Arch:          sudo pacman -S jq"
+  "Arch:          sudo pacman -S jq" \
+  "NixOS:         add 'jq' to environment.systemPackages, then nixos-rebuild switch"
 
 # ---------- arg parsing ----------
 EXPLICIT_N=""
