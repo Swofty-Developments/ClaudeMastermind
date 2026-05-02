@@ -7,11 +7,11 @@
 #   $1 = tmux session name
 #
 # Reads:
-#   /tmp/<session>.last_resp — baseline (last ⏺ line before send.sh was called)
+#   /tmp/<session>.last_resp — baseline (last ● line before send.sh was called)
 #
 # Writes:
 #   /tmp/<session>.response — the latest response block (extracted: from the
-#   last ⏺ to the next "✻ <verb> for Ns" marker)
+#   last ● to the next "✻ <verb> for Ns" marker)
 #
 # Emits exactly one event line on stdout when complete:
 #   "RESPONSE_READY <session> <bytes>"
@@ -19,14 +19,14 @@
 #
 # Detection:
 #   Response complete when:
-#     (a) the last ⏺ line in the pane has changed from baseline, AND
+#     (a) the last ● line in the pane has changed from baseline, AND
 #     (b) the footer spinner anchor "shift+tab to cycle) · esc" is absent.
 #   Anchor to the footer adjacency, NOT the bare "esc to interrupt" string —
 #   agents may quote the latter in their actual response text.
 #
 #   Edge case: if two consecutive responses are textually identical (e.g.
-#   both "⏺ ok"), the last-line check won't trip. Mitigated by also
-#   tracking the count of ⏺ markers in the pane: if it changed, fire.
+#   both "● ok"), the last-line check won't trip. Mitigated by also
+#   tracking the count of ● markers in the pane: if it changed, fire.
 set -euo pipefail
 
 SESSION="$1"
@@ -47,8 +47,8 @@ while true; do
     echo "WATCH_ERROR session $SESSION not found"
     exit 1
   }
-  cur_last=$(echo "$pane" | grep '⏺ ' | tail -1 || true)
-  cur_count=$(echo "$pane" | grep -c '⏺ ' || true)
+  cur_last=$(echo "$pane" | grep '[⏺●] ' | tail -1 || true)
+  cur_count=$(echo "$pane" | grep -c '[⏺●] ' || true)
   spinning=$(echo "$pane" | tail -n "$FOOTER_REGION_LINES" | grep -c "$FOOTER_PATTERN" || true)
 
   changed=0
@@ -56,7 +56,7 @@ while true; do
   if [ "$cur_count" != "$PRE_COUNT" ]; then changed=1; fi
 
   if [ "$changed" -eq 1 ] && [ "$spinning" -eq 0 ]; then
-    last_line_n=$(echo "$pane" | grep -n '⏺ ' | tail -1 | cut -d: -f1 || true)
+    last_line_n=$(echo "$pane" | grep -n '[⏺●] ' | tail -1 | cut -d: -f1 || true)
     if [ -n "$last_line_n" ]; then
       suffix=$(echo "$pane" | tail -n "+$last_line_n")
       end_offset=$(echo "$suffix" | grep -nE '^✻ [A-Za-z]+ for [0-9]+s' | head -1 | cut -d: -f1 || true)

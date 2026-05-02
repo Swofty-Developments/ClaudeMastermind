@@ -42,10 +42,10 @@ else
 fi
 echo "---"
 
-# Extract latest ⏺ block (may be partial mid-stream)
-# `|| true` guards: if no ⏺ in pane (e.g. scrolled off mid-stream before
+# Extract latest ● block (may be partial mid-stream)
+# `|| true` guards: if no ● in pane (e.g. scrolled off mid-stream before
 # the new response arrives), grep exits 1 and pipefail would kill us.
-last_line_n=$(echo "$pane" | grep -n '⏺ ' | tail -1 | cut -d: -f1 || true)
+last_line_n=$(echo "$pane" | grep -n '[⏺●] ' | tail -1 | cut -d: -f1 || true)
 if [ -n "$last_line_n" ]; then
   suffix=$(echo "$pane" | tail -n "+$last_line_n")
   end_offset=$(echo "$suffix" | grep -nE '^✻ [A-Za-z]+ for [0-9]+s' | head -1 | cut -d: -f1 || true)
@@ -55,7 +55,7 @@ if [ -n "$last_line_n" ]; then
     echo "$suffix"
   fi
 else
-  # No ⏺ yet — agent is still in pre-response thinking. Show tail of pane
+  # No ● yet — agent is still in pre-response thinking. Show tail of pane
   # so the orchestrator can still see what's on screen (spinner line, tip, etc.)
   echo "$pane" | tail -15
 fi

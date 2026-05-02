@@ -7,7 +7,7 @@
 #   $1 = tmux session name (e.g. "mastermind-3")
 #   $2 = prompt text (single argument; quote it)
 #
-# Side effect: writes /tmp/<session>.last_resp = the last ⏺ line in the pane
+# Side effect: writes /tmp/<session>.last_resp = the last ● line in the pane
 # BEFORE submission. watch.sh reads this as its baseline.
 #
 # Submission quirk:
@@ -19,14 +19,14 @@ set -euo pipefail
 SESSION="$1"
 PROMPT="$2"
 
-# Snapshot baseline for watch.sh — both the last ⏺ line text and the count
-# of ⏺ markers in the visible pane. watch.sh fires on a change in EITHER,
+# Snapshot baseline for watch.sh — both the last ● line text and the count
+# of ● markers in the visible pane. watch.sh fires on a change in EITHER,
 # so both must be set fresh on each send (or it could trigger off stale
 # state from a prior failed watch).
 pane=$(tmux capture-pane -t "$SESSION" -p)
-echo "$pane" | grep '⏺ ' | tail -1 > "/tmp/$SESSION.last_resp" \
+echo "$pane" | grep '[⏺●] ' | tail -1 > "/tmp/$SESSION.last_resp" \
   || echo "" > "/tmp/$SESSION.last_resp"
-echo "$pane" | grep -c '⏺ ' > "/tmp/$SESSION.last_count" || echo 0 > "/tmp/$SESSION.last_count"
+echo "$pane" | grep -c '[⏺●] ' > "/tmp/$SESSION.last_count" || echo 0 > "/tmp/$SESSION.last_count"
 
 # Type prompt, settle, send Enter separately
 tmux send-keys -t "$SESSION" "$PROMPT"
